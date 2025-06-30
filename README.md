@@ -1,12 +1,87 @@
-# React + Vite
+# AI-Based Study Assistant Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React-based web application that provides an intelligent study assistant platform. Built with React, Vite, and Tailwind CSS, featuring a beautiful UI powered by shadcn/ui components.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **User Authentication**: Secure login, signup, and password reset functionality
+- **Document Upload**: Upload and process study materials
+- **AI-Powered Summaries**: Generate intelligent summaries of uploaded content
+- **Interactive Quizzes**: Create and take quizzes based on study materials
+- **Dashboard Analytics**: Track your study progress and performance
+- **Responsive Design**: Modern, mobile-friendly interface
+- **Real-time Notifications**: Toast notifications for user feedback
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend**: React 18 with Vite
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **State Management**: Zustand
+- **Routing**: React Router DOM
+- **Forms**: React Hook Form with Zod validation
+- **HTTP Client**: Axios
+- **UI Components**: Radix UI primitives
+- **Icons**: Lucide React
+
+## Prerequisites
+
+- Node.js (version 16 or higher)
+- npm or yarn package manager
+
+## Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd AI-Based-Study-Assistant-Frontend
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+
+   Create a `.env` file in the root directory:
+
+   ```bash
+   # API Configuration
+   VITE_API_BASE_URL=http://localhost:8000
+   ```
+
+4. **Start the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at `http://localhost:5173`
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── layout/         # Layout components
+│   ├── ui/             # shadcn/ui components
+├── pages/              # Page components
+├── services/           # API service functions
+├── store/              # Zustand state management
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries and configurations
+├── router/             # React Router configuration
+├── App.jsx             # Main app component
+├── main.jsx            # Application entry point
+└── index.css           # Global styles
+```

@@ -1,149 +1,167 @@
-import React, { useState } from 'react';
-import {
-  Upload as UploadIcon,
-  FileText,
-  Search,
-  Filter,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-} from 'lucide-react';
+import { useEffect, useState } from "react";
+import { FileText, Filter, Search, Upload as UploadIcon, Trash2, Download, AlertTriangle } from "lucide-react";
+import { toast } from "../hooks/use-toast.jsx";
 
-export const Upload = () => {
+import { useNoteStore } from "../store";
+
+const Upload = () => {
   const [dragActive, setDragActive] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [files, setFiles] = useState([
-    {
-      id: '1',
-      name: 'Biology Chapter 1.pdf',
-      type: 'PDF',
-      size: '2.4 MB',
-      uploadDate: '2024-01-15',
-      status: 'completed',
-    },
-    {
-      id: '2',
-      name: 'Physics Mechanics.pdf',
-      type: 'PDF',
-      size: '1.8 MB',
-      uploadDate: '2024-01-14',
-      status: 'completed',
-    },
-    {
-      id: '3',
-      name: 'Chemistry Basics.docx',
-      type: 'DOCX',
-      size: '1.2 MB',
-      uploadDate: '2024-01-13',
-      status: 'processing',
-    },
-  ]);
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  
+  const { 
+    notes, 
+    fetchNotes,
+    handleUpload, 
+    handleDelete,
+    isLoading, 
+    error,
+    searchTerm,
+    setSearchTerm,
+    clearError
+  } = useNoteStore();
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    noteId: null,
+    fileName: ""
+  });
+
+  const onFileDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const onFileChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleUpload(e.target.files[0]);
+    }
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setLocalSearchTerm(value);
+    
+    setTimeout(() => {
+      setSearchTerm(value);
+    }, 300);
+  };
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
+  const handleDeleteNote = (noteId, fileName) => {
+    setConfirmDialog({
+      isOpen: true,
+      noteId,
+      fileName
+    });
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await handleDelete(confirmDialog.noteId);
+      toast({
+        title: "Success",
+        description: "File deleted successfully!",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete the file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setConfirmDialog({ isOpen: false, noteId: null, fileName: "" });
     }
   };
 
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      handleFiles(e.target.files);
-    }
+  const cancelDelete = () => {
+    setConfirmDialog({ isOpen: false, noteId: null, fileName: "" });
   };
 
-  const handleFiles = (fileList) => {
-    console.log('Files to upload:', fileList);
-    // Add file handling logic here (e.g. upload to backend)
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "Unknown size";
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'processing':
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      case 'failed':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
-    }
+  const getFileType = (fileName) => {
+    if (!fileName) return "Unknown";
+    const extension = fileName.split('.').pop()?.toUpperCase();
+    return extension || "Unknown";
   };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'Ready for AI Processing';
-      case 'processing':
-        return 'Processing...';
-      case 'failed':
-        return 'Upload Failed';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-slate-800">Upload Notes</h1>
+        <h1 className="text-3xl font-bold text-foreground">Upload Notes</h1>
         <div className="flex items-center space-x-2">
-          <UploadIcon className="w-5 h-5 text-blue-500" />
-          <span className="text-sm text-slate-600">PDF & DOCX supported</span>
+          <UploadIcon className="w-5 h-5 text-primary" />
+          <span className="text-sm text-muted-foreground">
+            PDF, DOCX, TXT, DOC supported
+          </span>
         </div>
       </div>
 
-      {/* Upload Area */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragActive
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50 hover:bg-accent/50"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
-          onDrop={handleDrop}
+          onDrop={onFileDrop}
         >
           <div className="space-y-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <UploadIcon className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <UploadIcon
+                className={`w-8 h-8 text-primary ${
+                  isLoading ? "animate-spin" : ""
+                }`}
+              />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                Drop your files here or browse
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {isLoading ? "Uploading..." : "Drop your files here or browse"}
               </h3>
-              <p className="text-slate-500 mb-4">Support for PDF and DOCX files up to 10MB</p>
+              <p className="text-muted-foreground mb-4">
+                Support for PDF, DOCX, TXT, and DOC files up to 50MB
+              </p>
               <input
                 type="file"
-                multiple
-                accept=".pdf,.docx"
-                onChange={handleChange}
+                accept=".pdf,.docx,.txt,.doc"
+                onChange={onFileChange}
                 className="hidden"
                 id="file-upload"
+                disabled={isLoading}
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
+                className={`inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <UploadIcon className="w-5 h-5 mr-2" />
                 Choose Files
@@ -151,67 +169,152 @@ export const Upload = () => {
             </div>
           </div>
         </div>
+        
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+            <button 
+              onClick={clearError}
+              className="text-red-500 text-xs mt-1 hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Files List */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
+      <div className="bg-card rounded-xl shadow-sm border border-border">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Uploaded Files</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Uploaded Files ({notes.length})
+            </h2>
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search files..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={localSearchTerm}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-4 py-2 bg-muted border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-foreground placeholder-muted-foreground w-64"
                 />
               </div>
-              <button className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                <Filter className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
 
-        <div className="divide-y divide-slate-200">
-          {filteredFiles.length > 0 ? (
-            filteredFiles.map((file) => (
-              <div key={file.id} className="p-4 hover:bg-slate-50 transition-colors">
+        <div className="divide-y divide-border">
+          {isLoading && !notes.length ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading files...</p>
+            </div>
+          ) : notes.length > 0 ? (
+            notes.map((note) => (
+              <div
+                key={note.noteId || note.id}
+                className="p-4 hover:bg-accent transition-colors"
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-medium text-slate-800">{file.name}</h3>
-                      <p className="text-sm text-slate-500">
-                        {file.type} • {file.size} • Uploaded on {file.uploadDate}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-foreground truncate">
+                        {note.fileName || note.title || "Untitled"}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {getFileType(note.fileName)} • 
+                        {note.uploadedAt ? (
+                          <span> Uploaded on {new Date(note.uploadedAt).toLocaleDateString()}</span>
+                        ) : (
+                          <span> Recently uploaded</span>
+                        )}
+                        {note.status && (
+                          <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                            note.status === 'uploaded' 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {note.status}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(file.status)}
-                      <span className="text-sm text-slate-600">
-                        {getStatusText(file.status)}
-                      </span>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => handleDeleteNote(note.noteId || note.id, note.fileName || "this file")}
+                      className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete file"
+                      disabled={isLoading}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
             ))
           ) : (
             <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-800 mb-2">No files found</h3>
-              <p className="text-slate-500">Upload your first document to get started</p>
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {searchTerm ? `No files found matching "${searchTerm}"` : "No files uploaded yet"}
+              </p>
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    setLocalSearchTerm("");
+                    setSearchTerm("");
+                  }}
+                  className="text-primary text-sm mt-2 hover:underline"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete File</h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Are you sure you want to delete <span className="font-medium text-gray-900">"{confirmDialog.fileName}"</span>? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default Upload;
