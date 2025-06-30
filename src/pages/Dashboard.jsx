@@ -29,12 +29,6 @@ const Dashboard = () => {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    // Add these debug lines
-    console.log('Dashboard - About to fetch data');
-    console.log('User:', user);
-    console.log('Access Token:', localStorage.getItem('accessToken'));
-    console.log('User ID:', localStorage.getItem('userId'));
-    
     if (user && localStorage.getItem('accessToken')) {
       console.log('User and token exist, calling fetchDashboardData');
       fetchDashboardData();
