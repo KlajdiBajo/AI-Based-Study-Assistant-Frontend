@@ -2,7 +2,7 @@
 
 A modern React-based web application that provides an intelligent study assistant platform. Built with React, Vite, and Tailwind CSS, featuring a beautiful UI powered by shadcn/ui components.
 
-## 🎥 Demo Video
+## Demo Video
 
 Click the image below to watch the application in action:
 
