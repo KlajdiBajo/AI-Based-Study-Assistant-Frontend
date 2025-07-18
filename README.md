@@ -8,7 +8,7 @@ Click the image below to watch the application in action:
 
 <p align="center">
   <a href="https://youtu.be/8YDzjDAyoLA" target="_blank">
-    <img src="https://imgur.com/a/OArynIk" alt="AI Study Assistant Demo" width="720"/>
+    <img src="https://i.imgur.com/NgFJh0P.png" alt="AI Study Assistant Demo" width="720"/>
   </a>
 </p>
 
