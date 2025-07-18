@@ -12,8 +12,6 @@ Click the image below to watch the application in action:
   </a>
 </p>
 
-<p align="center"><em>Click the image to watch the full demo on YouTube</em></p>
-
 ## Features
 
 - **User Authentication**: Secure login, signup, and password reset functionality
