@@ -6,7 +6,13 @@ A modern React-based web application that provides an intelligent study assistan
 
 Click the image below to watch the application in action:
 
-[![Watch the Demo](https://img.youtube.com/vi/8YDzjDAyoLA/0.jpg)](https://youtu.be/8YDzjDAyoLA)
+<p align="center">
+  <a href="https://youtu.be/8YDzjDAyoLA" target="_blank">
+    <img src="https://i.imgur.com/XXXXX.png" alt="AI Study Assistant Demo" width="720"/>
+  </a>
+</p>
+
+<p align="center"><em>Click the image to watch the full demo on YouTube</em></p>
 
 ## Features
 
