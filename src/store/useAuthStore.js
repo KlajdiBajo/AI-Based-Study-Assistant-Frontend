@@ -1,108 +1,129 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { api } from "../lib";
+import api from "../lib/api"; // Adjust path as needed
 
 const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
-      accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
 
+      /**
+       * Login user - tokens are automatically set in HttpOnly cookies by the server
+       */
       login: async (email, password) => {
         const response = await api.post("/api/v1/auth/login", {
           email,
           password,
         });
-        
-        console.log('Login response:', response.data);
-        
-        // Extract data from your actual response structure  
-        const { accessToken, refreshToken, email: userEmail, firstName, lastName, role, verified, isVerified } = response.data;
-        
-        console.log('Extracted accessToken:', accessToken);
-        console.log('Extracted refreshToken:', refreshToken);
-        
-        // Create user object with email as ID (temporary workaround)
-        const user = {
-          id: userEmail, // Use email as ID temporarily
+
+        console.log("Login response:", response.data);
+
+        // Extract user data from response (no tokens in response body)
+        const {
           email: userEmail,
           firstName,
           lastName,
           role,
-          verified: verified || isVerified
+          isVerified,
+        } = response.data;
+
+        // Create user object
+        const user = {
+          email: userEmail,
+          firstName,
+          lastName,
+          role,
+          verified: isVerified,
         };
-        
-        set({ user, accessToken, refreshToken, isAuthenticated: true });
-        
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("userId", userEmail); // Store email as userId
-        
-        console.log('Stored in localStorage:');
-        console.log('accessToken:', localStorage.getItem('accessToken'));
-        console.log('userId:', localStorage.getItem('userId'));
+
+        // Store only user info, not tokens
+        set({ user, isAuthenticated: true });
+
+        console.log("User logged in:", user);
       },
 
-      // Add method to update tokens after refresh
-      updateTokens: (newAccessToken, userData = null) => {
-        set((state) => ({
-          accessToken: newAccessToken,
-          user: userData ? { ...state.user, ...userData } : state.user
-        }));
-        
-        localStorage.setItem("accessToken", newAccessToken);
-        if (userData) {
-          localStorage.setItem("user", JSON.stringify({ ...get().user, ...userData }));
+      /**
+       * Check if user is authenticated by calling a protected endpoint
+       */
+      checkAuth: async () => {
+        try {
+          console.log("Checking authentication...");
+
+          const response = await api.get("/api/v1/myProfile");
+
+          if (response.data) {
+            const userData = {
+              email: response.data.email,
+              firstName: response.data.firstName,
+              lastName: response.data.lastName,
+              role: response.data.role,
+              verified: response.data.isOfficiallyEnabled,
+            };
+
+            set({
+              user: userData,
+              isAuthenticated: true,
+            });
+
+            console.log("Auth valid:", userData.email);
+            return true;
+          }
+        } catch (error) {
+          console.error("Auth check failed:", error.message);
+
+          // Don't set state here - let the interceptor handle redirect
+          if (error.response?.status !== 401) {
+            set({ user: null, isAuthenticated: false });
+          }
+
+          return false;
         }
       },
 
-      // Method to check if user is authenticated
-      checkAuth: () => {
-        const token = localStorage.getItem("accessToken");
-        const refreshToken = localStorage.getItem("refreshToken");
-        const user = localStorage.getItem("user");
-        
-        if (token && refreshToken && user) {
+      /**
+       * Logout user - calls backend to revoke refresh token and clear cookies
+       */
+      logout: async () => {
+        try {
+          // Call logout endpoint to revoke refresh token
+          await api.post("/api/v1/auth/logout");
+          console.log("Logout successful");
+        } catch (error) {
+          console.error("Logout error:", error);
+          // Continue with local logout even if API call fails
+        } finally {
+          // Clear local state
           set({
-            accessToken: token,
-            refreshToken: refreshToken,
-            user: JSON.parse(user),
-            isAuthenticated: true
+            user: null,
+            isAuthenticated: false,
           });
-          return true;
         }
-        
-        return false;
       },
 
-      logout: () => {
+      /**
+       * Force logout (called when auth fails)
+       */
+      forceLogout: () => {
         set({
           user: null,
-          accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
         });
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        localStorage.removeItem("userId");
-      },
 
-      // Method to force logout (called when refresh fails)
-      forceLogout: () => {
-        get().logout();
-        // Optionally redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+        // Redirect to login
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
         }
-      }
+      },
     }),
     {
       name: "auth-storage",
+      // CRITICAL: Only persist user info, NOT tokens
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );

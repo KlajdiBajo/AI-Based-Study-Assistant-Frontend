@@ -256,12 +256,27 @@ const useQuizStore = create((set, get) => ({
 
   canTakeQuiz: (quizId) => {
     const { deletedQuizzes } = get();
-    const deletionRecord = deletedQuizzes.find(record => record.quizId === quizId);
+    
+    // Convert quizId to consistent format for comparison
+    const normalizedQuizId = String(quizId);
+    
+    const deletionRecord = deletedQuizzes.find(record => 
+      String(record.quizId) === normalizedQuizId
+    );
+    
     if (!deletionRecord) return true;
 
     const deletionTime = new Date(deletionRecord.deletedAt);
     const now = new Date();
     const twentyFourHoursLater = new Date(deletionTime.getTime() + 24 * 60 * 60 * 1000);
+    
+    console.log('🔍 Quiz availability check:', {
+      quizId: normalizedQuizId,
+      deletionTime: deletionTime.toISOString(),
+      now: now.toISOString(),
+      canRetakeAt: twentyFourHoursLater.toISOString(),
+      canTake: now >= twentyFourHoursLater
+    });
     
     return now >= twentyFourHoursLater;
   },
@@ -471,20 +486,32 @@ const useQuizStore = create((set, get) => ({
       const { allAttempts } = get();
       const attemptToDelete = allAttempts.find(attempt => attempt.id === attemptId);
       
+      if (!attemptToDelete) {
+        throw new Error("Attempt not found");
+      }
+
+      console.log('🗑️ Deleting attempt:', attemptToDelete);
+      
       // Call backend to delete
       await deleteQuizAttempt(attemptId);
       
       // IMMEDIATELY remove from BOTH local state arrays
       set(state => ({
         allAttempts: state.allAttempts.filter(attempt => attempt.id !== attemptId),
-        attempts: state.attempts.filter(attempt => attempt.id !== attemptId) // Add this line
+        attempts: state.attempts.filter(attempt => attempt.id !== attemptId)
       }));
       
-      // Add to deleted quizzes list (24-hour ban) if we found the attempt
-      if (attemptToDelete && attemptToDelete.quizId) {
+      // CRITICAL: Add to deleted quizzes list with proper quizId tracking
+      if (attemptToDelete.quizId) {
+        console.log('📝 Recording deletion for quizId:', attemptToDelete.quizId);
+        
         set(state => ({
           deletedQuizzes: [
-            ...state.deletedQuizzes.filter(record => record.quizId !== attemptToDelete.quizId),
+            // Remove any existing record for this quiz
+            ...state.deletedQuizzes.filter(record => 
+              String(record.quizId) !== String(attemptToDelete.quizId)
+            ),
+            // Add new deletion record
             {
               quizId: attemptToDelete.quizId,
               documentName: attemptToDelete.documentName,
@@ -492,6 +519,8 @@ const useQuizStore = create((set, get) => ({
             }
           ]
         }));
+        
+        console.log('✅ Updated deletedQuizzes:', get().deletedQuizzes);
       }
       
       toast({

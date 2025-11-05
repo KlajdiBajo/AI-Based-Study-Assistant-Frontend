@@ -6,20 +6,19 @@ import { api } from "../lib"; // Import your api instance
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user: authUser, logout } = useAuthStore();
+  const { user: authUser } = useAuthStore();
   const [fullProfile, setFullProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch complete profile data from backend
   useEffect(() => {
     const fetchFullProfile = async () => {
       try {
         setIsLoading(true);
         console.log("Fetching full profile from backend...");
-        
-        const response = await api.get("/api/v1/profile/myProfile"); // ✅ Fixed endpoint path
-        
+
+        const response = await api.get("/api/v1/myProfile");
+
         console.log("Full profile response:", response.data);
         setFullProfile(response.data);
         setError(null);
@@ -40,11 +39,6 @@ const Profile = () => {
     }
   }, [authUser]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   // Use full profile if available, fallback to auth user
   const user = fullProfile || authUser;
 
@@ -62,21 +56,29 @@ const Profile = () => {
 
   const formatGender = (gender) => {
     if (!gender) return "Not specified";
-    if (typeof gender === 'object' && gender.name) {
-      return gender.name.charAt(0).toUpperCase() + gender.name.slice(1).toLowerCase();
+    if (typeof gender === "object" && gender.name) {
+      return (
+        gender.name.charAt(0).toUpperCase() + gender.name.slice(1).toLowerCase()
+      );
     }
-    return gender.toString().charAt(0).toUpperCase() + gender.toString().slice(1).toLowerCase();
+    return (
+      gender.toString().charAt(0).toUpperCase() +
+      gender.toString().slice(1).toLowerCase()
+    );
   };
 
   const formatMemberSince = (createdAt) => {
-    if (!createdAt) return 'June 2025'; // Default for existing users
-    
+    if (!createdAt) return "June 2025"; // Default for existing users
+
     try {
       const date = new Date(createdAt);
-      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
     } catch (error) {
       console.error("Error formatting date:", error);
-      return 'Recently';
+      return "Recently";
     }
   };
 
@@ -106,7 +108,7 @@ const Profile = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center p-8">
           <p className="text-red-500">Failed to load profile data</p>
-          <button 
+          <button
             onClick={() => navigate("/dashboard")}
             className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
           >
@@ -122,9 +124,7 @@ const Profile = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
         {error && (
-          <p className="text-yellow-600 text-sm">
-            Some data may be incomplete
-          </p>
+          <p className="text-yellow-600 text-sm">Some data may be incomplete</p>
         )}
       </div>
 
@@ -139,14 +139,14 @@ const Profile = () => {
                     alt="Profile"
                     className="w-32 h-32 rounded-full object-cover"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
                     }}
                   />
                 ) : null}
-                <div 
+                <div
                   className={`w-32 h-32 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-4xl font-bold ${
-                    user?.profilePicture ? 'hidden' : 'flex'
+                    user?.profilePicture ? "hidden" : "flex"
                   }`}
                 >
                   {getInitials()}
@@ -225,8 +225,22 @@ const Profile = () => {
                   Account Status
                 </label>
                 <p className="flex items-center space-x-2 text-foreground bg-muted px-3 py-2 rounded-lg">
-                  <div className={`w-3 h-3 rounded-full ${user.verified || user.isVerified || user.isOfficiallyEnabled ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                  <span>{user.verified || user.isVerified || user.isOfficiallyEnabled ? 'Verified' : 'Pending Verification'}</span>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      user.verified ||
+                      user.isVerified ||
+                      user.isOfficiallyEnabled
+                        ? "bg-green-500"
+                        : "bg-yellow-500"
+                    }`}
+                  ></div>
+                  <span>
+                    {user.verified ||
+                    user.isVerified ||
+                    user.isOfficiallyEnabled
+                      ? "Verified"
+                      : "Pending Verification"}
+                  </span>
                 </p>
               </div>
             </div>

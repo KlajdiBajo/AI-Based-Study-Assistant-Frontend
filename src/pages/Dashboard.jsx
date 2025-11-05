@@ -26,40 +26,36 @@ const Dashboard = () => {
     fetchDashboardData,
   } = useDashboardStore();
 
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (user && localStorage.getItem('accessToken')) {
-      console.log('User and token exist, calling fetchDashboardData');
+    // ✅ FIXED: Only check if user is authenticated (no localStorage check!)
+    if (isAuthenticated && user) {
+      console.log("User authenticated, calling fetchDashboardData");
       fetchDashboardData();
     } else {
-      console.log('No user or token, skipping dashboard fetch');
+      console.log("User not authenticated, skipping dashboard fetch");
     }
-  }, [fetchDashboardData, user]);
+  }, [fetchDashboardData, user, isAuthenticated]);
 
   useEffect(() => {
-    console.log('Dashboard Data:');
-    console.log('Overview:', overview);
-    console.log('Performance Trends:', performanceTrends);
-    console.log('Recent Activities:', recentActivities);
-    console.log('Recommendations:', recommendations);
-    console.log('Weak Areas:', weakAreas);
-    console.log('Study Streak:', studyStreak);
-    console.log('Note Performance:', notePerformance);
-  }, [overview, performanceTrends, recentActivities, recommendations, weakAreas, studyStreak, notePerformance]);
-
-  const loadUserData = async () => {
-    try {
-      const response = await api.get("/api/v1/auth/myProfile");
-      setUser(response.data);
-    } catch (error) {
-      console.error("Failed to load user:", error);
-    }
-  };
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
+    console.log("Dashboard Data:");
+    console.log("Overview:", overview);
+    console.log("Performance Trends:", performanceTrends);
+    console.log("Recent Activities:", recentActivities);
+    console.log("Recommendations:", recommendations);
+    console.log("Weak Areas:", weakAreas);
+    console.log("Study Streak:", studyStreak);
+    console.log("Note Performance:", notePerformance);
+  }, [
+    overview,
+    performanceTrends,
+    recentActivities,
+    recommendations,
+    weakAreas,
+    studyStreak,
+    notePerformance,
+  ]);
 
   if (isLoading) {
     return <div className="text-center p-8">Loading dashboard...</div>;
@@ -90,14 +86,15 @@ const Dashboard = () => {
     },
     {
       label: "Average Score",
-      value: overview?.averageScore ? `${Math.round(overview.averageScore)}%` : "N/A",
+      value: overview?.averageScore
+        ? `${Math.round(overview.averageScore)}%`
+        : "N/A",
       icon: Target,
       color: "purple",
     },
   ];
 
   return (
-    // ✅ Removed wrapper divs and Navbar - Wrapper component handles layout
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">
@@ -118,7 +115,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+        <div className="bg-card rounded-xl p-6 shadow-sm border border-border h-fit">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">
               Performance Trends
@@ -132,16 +129,21 @@ const Dashboard = () => {
                   {performanceTrends.summary}
                 </p>
                 <div className="text-sm">
-                  <span className={`font-medium ${
-                    performanceTrends.trendDirection === 'IMPROVING' ? 'text-green-600' :
-                    performanceTrends.trendDirection === 'DECLINING' ? 'text-red-600' :
-                    'text-gray-600'
-                  }`}>
+                  <span
+                    className={`font-medium ${
+                      performanceTrends.trendDirection === "IMPROVING"
+                        ? "text-green-600"
+                        : performanceTrends.trendDirection === "DECLINING"
+                        ? "text-red-600"
+                        : "text-gray-600"
+                    }`}
+                  >
                     {performanceTrends.trendDirection}
                   </span>
                   {performanceTrends.trendPercentage !== 0 && (
                     <span className="ml-2 text-muted-foreground">
-                      ({Math.abs(performanceTrends.trendPercentage).toFixed(1)}%)
+                      ({Math.abs(performanceTrends.trendPercentage).toFixed(1)}
+                      %)
                     </span>
                   )}
                 </div>
@@ -171,7 +173,7 @@ const Dashboard = () => {
           </h2>
           <div className="space-y-3">
             {recentActivities?.length > 0 ? (
-              recentActivities.map((activity, index) => (
+              recentActivities?.slice(0, 5).map((activity, index) => (
                 <div
                   key={activity.relatedId || index}
                   className="flex items-start space-x-3 p-3 hover:bg-accent rounded-lg transition-colors"
@@ -213,13 +215,16 @@ const Dashboard = () => {
                 className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-destructive">{area.fileName}</h3>
+                  <h3 className="font-medium text-destructive">
+                    {area.fileName}
+                  </h3>
                   <span className="text-sm bg-destructive/20 text-destructive px-2 py-1 rounded-full">
                     {Math.round(area.errorRate)}% error rate
                   </span>
                 </div>
                 <p className="text-sm text-destructive/80 mb-2">
-                  {area.mistakeCount} mistakes out of {area.questionsAttempted} questions
+                  {area.mistakeCount} mistakes out of {area.questionsAttempted}{" "}
+                  questions
                 </p>
                 <p className="text-sm text-destructive/80">
                   {area.recommendedAction}

@@ -90,6 +90,17 @@ const Quiz = () => {
     return () => resetQuizState();
   }, [noteId]);
 
+  useEffect(() => {
+    const { deletedQuizzes } = useQuizStore.getState();
+    console.log('🔍 Current deleted quizzes:', deletedQuizzes);
+    
+    if (quiz && (quiz.id || quiz.quizId)) {
+      const quizId = quiz.id || quiz.quizId;
+      const canTake = canStartQuiz();
+      console.log(`🎯 Quiz ${quizId} can be taken:`, canTake);
+    }
+  }, [quiz, useQuizStore.getState().deletedQuizzes]);
+
   const handleStartQuiz = async () => {    
     // Check 24-hour rule first
     if (!canStartQuiz()) {

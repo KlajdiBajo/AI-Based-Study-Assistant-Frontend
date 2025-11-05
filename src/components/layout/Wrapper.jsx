@@ -11,7 +11,7 @@ const Wrapper = ({ children }) => {
   useEffect(() => {
     const fetchFullProfile = async () => {
       try {
-        const response = await api.get("/api/v1/profile/myProfile");
+        const response = await api.get("/api/v1/myProfile");
         setFullProfile(response.data);
       } catch (error) {
         console.error("Error fetching profile in Wrapper:", error);
