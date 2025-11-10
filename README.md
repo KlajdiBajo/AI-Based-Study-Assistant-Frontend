@@ -1,6 +1,6 @@
 # AI Study Assistant - ReactJS Frontend
 
-A modern React-based web application that provides an intelligent study assistant platform. Built with React, Vite, and Tailwind CSS, featuring a beautiful UI powered by shadcn/ui components.
+A modern React-based web application that delivers an intelligent study assistant experience. Built with React, Vite, and Tailwind CSS, it offers a fast, responsive, and user-friendly interface.
 
 ---
 
